@@ -186,10 +186,11 @@ class NLSClientScript extends \CClientScript {
 	 * 
 	 */
 	protected $cssMerger = null;
-	
-	
+  
+  public $excludeUrlPattern = array();
 	
 	public function init() {
+    $GLOBALS['minifyIsOn']=false;
 		parent::init();
 		
 		if (is_numeric($this->nlsScriptPosition))
@@ -221,8 +222,8 @@ class NLSClientScript extends \CClientScript {
 			'closeCurl' => false
 		), $this->downloader);
 
-	}
-	
+	}	
+  
 	protected function addAppVersion($url) {
 		if (!empty($this->appVersion) && !NLSUtils::isAbsoluteUrl($url))
 			$url = NLSUtils::addUrlParams($url, array('nlsver' => $this->appVersion));
@@ -255,7 +256,7 @@ class NLSClientScript extends \CClientScript {
 		}
 		return $h;
 	}
-
+		
 	protected function _mergeJs($pos) {
 		$smap = null;
 
@@ -331,7 +332,8 @@ class NLSClientScript extends \CClientScript {
 			$this->scriptFiles[$pos] = $finalScriptFiles;
 		}
 	}
-
+  
+  
 
 	protected function _mergeCss() {
 
@@ -400,6 +402,7 @@ class NLSClientScript extends \CClientScript {
 	}
 
 
+
 	//If someone needs to access these, can be useful
 	public function getScriptFiles() {
 		return $this->scriptFiles;
@@ -410,11 +413,8 @@ class NLSClientScript extends \CClientScript {
 
 	
 
-
-
-
 	public function renderHead(&$output) {
-
+  if ($this->checkEnabled()) {
 		$this->_putnlscode();
 		
 		//merging
@@ -424,9 +424,11 @@ class NLSClientScript extends \CClientScript {
 		if ($this->mergeCss) {
 			$this->_mergeCss();
 		}
-
+  }
 		parent::renderHead($output);
 	}
+  
+
 
 	public function renderBodyBegin(&$output) {
 		
@@ -436,6 +438,7 @@ class NLSClientScript extends \CClientScript {
 
 		parent::renderBodyBegin($output);
 	}
+  
 
 	public function renderBodyEnd(&$output) {
 		
@@ -445,17 +448,25 @@ class NLSClientScript extends \CClientScript {
 
 		parent::renderBodyEnd($output);
 	}
+  
 	
 	public function registerScriptFile($url, $position = null, array $htmlOptions = array()) {
-		$url = $this->addAppVersion($url);
+    if ($this->checkEnabled()) {
+      $url = $this->addAppVersion($url);
+    }
 		//\Yii::log('URL regged:' . $url, 'info');
 		return parent::registerScriptFile($url, $position, $htmlOptions);
 	}
+  
 	
 	public function registerCssFile($url, $media = '') {
 		return parent::registerCssFile($this->addAppVersion($url), $media);
 	}
 	
+  
+  
+  
+  
 	protected function _putnlscode() {
 
 		if (!is_numeric($this->nlsScriptPosition) || \Yii::app()->request->isAjaxRequest)
@@ -478,4 +489,17 @@ class NLSClientScript extends \CClientScript {
 
 		$this->registerScript('fixDuplicateResources', $js, $this->nlsScriptPosition);
 	}
+  
+  function checkEnabled() {
+    if (isset($this->excludeUrlPattern) && is_array($this->excludeUrlPattern)) {
+      $absUrl=$_SERVER["REQUEST_URI"];
+      foreach ($this->excludeUrlPattern as $item) {
+        if (preg_match($item, $absUrl)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  
 }

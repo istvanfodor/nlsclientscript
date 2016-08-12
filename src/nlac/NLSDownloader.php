@@ -46,7 +46,8 @@ class NLSDownloader {
 		curl_setopt($this->ch, CURLOPT_CONNECTTIMEOUT, $this->options['curlConnectionTimeOut']);
 		curl_setopt($this->ch, CURLOPT_TIMEOUT, $this->options['curlTimeOut']);
 		curl_setopt($this->ch, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, false);
+		//curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($this->ch, CURLOPT_ENCODING, "");//by @le_top, from v7.0
 
 		return $this->ch;
@@ -63,6 +64,7 @@ class NLSDownloader {
 	 */	
 	public function get($url) {
 		$this->init();
+    $url=preg_replace('/.*url\(((http|https)):\/+/i', '$1://', $url);
 		curl_setopt($this->ch, CURLOPT_URL, $url);
 		$content = curl_exec($this->ch);
 		if ($this->err = curl_error($this->ch)) {
